@@ -14,7 +14,7 @@ wlan = network.WLAN(network.STA_IF)
 wlan.active(True)
 wlan.config(pm = 0xa11140) #disable powersaving mode
 mac = ubinascii.hexlify(network.WLAN().config('mac'),':').decode()
-wlan.connect(ssid, password)
+wlan.connect(ssid, password) #connect to network using ssid and pw info from secrets.py
 
 timeout = 10
 while timeout > 0:
@@ -50,6 +50,7 @@ blink_onboard_led(wlan_status)
 if wlan.status() != 3:
     raise RuntimeError('Wi-Fi connection failed')
 else:
+    # print network info picoW is connected to
     print('Connected to ' + wlan.config('essid'))
     status = wlan.ifconfig()
     print('ip = ' + status[0])
