@@ -1,5 +1,9 @@
-'''This module implements a driver for the Si7021 humidity and temperature
+'''Credits to Chris Balmer
+https://github.com/chrisbalmer/micropython-si7021
+
+This module implements a driver for the Si7021 humidity and temperature
 sensor.
+
 Datasheet:
 https://www.silabs.com/Support%20Documents%2FTechnicalDocs%2FSi7021-A20.pdf
 '''
