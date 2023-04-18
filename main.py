@@ -5,6 +5,7 @@ from secrets import secrets
 from machine import Pin, I2C
 import utime
 import si7021
+from umqtt.simple import MQTTClient
 
 ssid = secrets['ssid']
 pw = secrets['pw']
@@ -14,7 +15,7 @@ wlan = network.WLAN(network.STA_IF)
 wlan.active(True)
 wlan.config(pm = 0xa11140) #disable powersaving mode
 mac = ubinascii.hexlify(network.WLAN().config('mac'),':').decode()
-wlan.connect(ssid, password) #connect to network using ssid and pw info from secrets.py
+wlan.connect(ssid, pw)
 
 timeout = 10
 while timeout > 0:
@@ -50,7 +51,6 @@ blink_onboard_led(wlan_status)
 if wlan.status() != 3:
     raise RuntimeError('Wi-Fi connection failed')
 else:
-    # print network info picoW is connected to
     print('Connected to ' + wlan.config('essid'))
     status = wlan.ifconfig()
     print('ip = ' + status[0])
@@ -61,10 +61,31 @@ i2c = machine.I2C(0, sda=Pin(0), scl=Pin(1), freq=400000)
 
 temp_sensor = si7021.Si7021(i2c)
 print('Identifier:          {value}'.format(value=temp_sensor.identifier))
-print('Serial:              {value}'.format(value=temp_sensor.serial))
+print('Serial:              {value}'.format(value=temp_sensor.serial) + '\n')
 
+def connectMQTT():
+    client = MQTTClient(client_id=b"device_name", server=b"___cluster_url.hivemq.cloud___", port=0, user=b"___hivemq_MQTT_username___", password=b"___hivemq_MQTT_password___",
+                        keepalive=7200, ssl=True, ssl_params={'server_hostname':'___cluster_url.hivemq.cloud___'}
+                        )
+    client.connect()
+    return client
+
+client = connectMQTT()
+
+def publish(topic, value):
+    print(topic)
+    print(value)
+    client.publish(topic, value)
+    print("publish Done")
+    
 while True:
-    utime.sleep(3)
-    print('Temperature: {value}'.format(value=temp_sensor.temperature) +
-          ' Relative Humidity: {value}'.format(value=temp_sensor.relative_humidity) +
-          ' Fahrenheit: {value}'.format(value=si7021.convert_celcius_to_fahrenheit(temp_sensor.temperature)))
+    #Read sensor data
+    Celsius = '{value}'.format(value=temp_sensor.temperature)
+    Humidity = '{value}'.format(value=temp_sensor.relative_humidity)
+    Fahrenheit = '{value}'.format(value=si7021.convert_celcius_to_fahrenheit(temp_sensor.temperature))
+    
+    publish('picow/Celsius', Celsius)
+    publish('picow/Fahrenheit', Fahrenheit)
+    publish('picow/Humidity', Humidity)
+    utime.sleep(5)
+    
